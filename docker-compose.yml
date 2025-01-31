@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      args:
+        user: ${USER:-laravel}
+        uid: ${UID:-1000}
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: ${APP_NAME:-laravel}_app
+    image: ${DOCKER_IMAGE_PREFIX:-laravel}/app:${DOCKER_IMAGE_TAG:-latest}
+    ports:
+      - "${APP_PORT:-8000}:8000"  # Port untuk PHP artisan serve
+      - "${VITE_PORT:-5173}:5173" # Port untuk Vite
+    volumes:
+      - ./:/var/www
+    networks:
+      - database-docker-network
+    tty: true
+
+networks:
+  database-docker-network:
+    external: true
