@@ -1,8 +1,11 @@
-FROM php:8.3-cli-alpine
+# Set Default ARG PHP VERSION
+ARG PHP_VERSION=8.3-cli-alpine
+FROM php:${PHP_VERSION}
 
-# Arguments defined in docker-compose.yml
+# ARG From docker-compose.yml
 ARG user
 ARG uid
+ARG DB_DRIVER
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -18,8 +21,14 @@ RUN apk add --no-cache \
     npm \
     ${PHPIZE_DEPS}
 
-# Install PHP extensions
-RUN docker-php-ext-install zip pdo_mysql mbstring exif pcntl bcmath gd
+# Install PHP extensions secara dinamis
+RUN set -eux; \
+    docker-php-ext-install zip mbstring exif pcntl bcmath gd \
+    && if [ "$DB_DRIVER" = "mysql" ]; then \
+        docker-php-ext-install pdo_mysql; \
+    elif [ "$DB_DRIVER" = "pgsql" ]; then \
+        apk add --no-cache postgresql-dev && docker-php-ext-install pdo_pgsql; \
+    fi
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
